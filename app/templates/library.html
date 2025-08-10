@@ -1,0 +1,41 @@
+<!-- Contenu à injecter dans #mainContent -->
+<div class="library-layout vh-100 d-flex flex-column" style="padding: 1.5rem;">
+    <!-- Section recherche -->
+    <div class="search-row mb-3">
+        <form hx-get="/library/search" hx-target=".table-responsive-container" hx-swap="innerHTML"
+              class="row gy-2 gx-3 align-items-center">
+            <div class="col-auto">
+                <input type="text" class="form-control" name="search" placeholder="Recherche (nom de fichier)">
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" name="artist" placeholder="Artiste">
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" name="title" placeholder="Titre">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Rechercher 2</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Section principale -->
+    <div class="content-row flex-grow-1 d-flex position-relative" style="min-height: 0; gap:1rem;">
+        <!-- Colonne tableau -->
+        <div class="table-col flex-grow-1 d-flex flex-column bg-dark rounded">
+            <div class="table-responsive-container h-100"
+                 hx-get="/library/search"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <!-- Le tableau sera injecté ici -->
+            </div>
+        </div>
+
+        <!-- Colonne détails -->
+        <div class="details-col" style="width: 300px;">
+            <div id="trackDetails" class="card bg-dark text-white h-100">
+                <p>Sélectionne une chanson pour voir les détails ici.</p>
+            </div>
+        </div>
+    </div>
+</div>

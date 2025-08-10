@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Playlist: {{ playlist_name }}</h2>
+
+{% if tracks %}
+<ul class="list-group">
+    {% for track in tracks %}
+    <li class="list-group-item bg-secondary text-white">
+        {{ track }}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>Aucune piste 2 dans cette playlist.</p>
+{% endif %}
+{% endblock %}

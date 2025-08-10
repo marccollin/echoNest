@@ -1,0 +1,42 @@
+<h2>{{ playlist_name }}</h2>
+
+{% if tracks %}
+<table class="table table-dark table-hover align-middle">
+    <thead>
+    <tr>
+        <th>▶️</th>
+        <th>Titre</th>
+        <th>Artiste</th>
+        <th>Album</th>
+        <th>Genre</th>
+        <th width="80">Année</th>
+        <th width="100">Durée</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for track in tracks %}
+    <tr class="track-row"
+        data-filepath="{{ track.filepath }}"
+        data-track='{{ track | tojson | safe }}'>
+        <td>  <i class="bi bi-play"></i></td>
+        <td>{{ track.title }}</td>
+        <td>{{ track.artist }}</td>
+        <td>{{ track.album }}</td>
+        <td>{{ track.genre or "-" }}</td>
+        <td>{{ track.year or "-" }}</td>
+        <td>{{ track.duration_str or "-" }}</td>
+        <td>
+            <button class="btn btn-sm btn-danger"
+                    hx-delete="/playlist/{{ playlist_name }}/remove"
+                    hx-vals='{"filename": "{{ track.filepath }}"}'
+                    hx-target="closest tr"
+                    hx-swap="outerHTML">🗑️</button>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Aucune chanson dans cette playlist.</p>
+{% endif %}

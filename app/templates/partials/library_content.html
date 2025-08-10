@@ -1,0 +1,24 @@
+<h2>Ma bibliothèque</h2>
+
+<!-- Formulaire de recherche -->
+<form hx-get="/library/search" hx-target="#libraryContainer" class="row gy-2 gx-3 align-items-center mb-3">
+    <div class="col-auto">
+        <input type="text" class="form-control" name="search" placeholder="Recherche  (nom de fichier)" />
+    </div>
+    <div class="col-auto">
+        <input type="text" class="form-control" name="artist" placeholder="Artiste" />
+    </div>
+    <div class="col-auto">
+        <input type="text" class="form-control" name="title" placeholder="Titre" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Rechercher</button>
+    </div>
+</form>
+
+<div id="libraryContainer"
+     hx-get="/library/search"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+    <!-- Le tableau s'affichera ici -->
+</div>

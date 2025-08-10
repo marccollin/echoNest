@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" xmlns:hx-on="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8" />
+    <title>EchoNest</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.6"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <!-- mon css custom -->
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+
+<body>
+
+<!-- Juste avant le lecteur audio -->
+<div id="nowPlayingInfo" class="now-playing-info bg-dark text-white p-3 d-none position-fixed">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">En cours de lecture</h6>
+            <button class="btn btn-sm btn-outline-light" onclick="toggleNowPlaying()">
+                <i class="bi bi-chevron-down" id="toggleIcon"></i>
+            </button>
+        </div>
+
+        <div id="nowPlayingContent">
+            <!-- Onglets pour différentes sections -->
+            <ul class="nav nav-pills nav-sm mb-2" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#track-details">Détails</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#lyrics-tab">Paroles</a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div id="track-details" class="tab-pane fade show active">
+                    <div id="trackDetails">
+                        <!-- Info de base -->
+                    </div>
+                </div>
+                <div id="lyrics-tab" class="tab-pane fade">
+                    <div id="lyricsContent" class="lyrics-container">
+                        <!-- Paroles chargées dynamiquement -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Audio Player (toujours visible en bas) -->
+<div id="audio-player" class="audio-player d-flex align-items-center px-4 fixed-bottom bg-dark">
+    <audio id="player" controls class="w-100">
+        <source id="playerSource" src="" type="audio/mpeg" />
+        Votre navigateur ne supporte pas la lecture audio.
+    </audio>
+</div>
+
+<div class="d-flex">
+    <div class="sidebar bg-dark text-white p-3" style="width: 250px; min-height: 100vh;">
+        <h4 class="mb-4">EchoNest</h4>
+
+        <nav class="nav flex-column">
+            <a class="nav-link text-white" href="/">🏠 Home</a>
+
+            <!-- Groupe d'entrée de recherche -->
+            <form id="searchForm" class="input-group mb-3" hx-get="/library/search" hx-target="#mainContent" hx-swap="innerHTML" hx-trigger="submit">
+                <span class="input-group-text" id="search-icon">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" class="form-control" placeholder="Rechercher..." aria-label="Rechercher" name="search" id="searchInput">
+            </form>
+
+            <!-- Ici on utilise hx-get pour charger uniquement le contenu dans #mainContent -->
+            <a
+                    class="nav-link text-white"
+                    hx-get="/library"
+                    hx-target="#mainContent"
+                    hx-swap="innerHTML"
+                    href="/library"
+            >
+                🎵 Library
+            </a>
+
+            <hr class="bg-secondary my-3" />
+
+            <!-- Section Playlists -->
+            <div class="d-flex justify-content-between align-items-center text-uppercase text-muted small mb-2">
+                <span>Playlists</span>
+                <button  class="icon-button" title="Créer une playlist" data-bs-toggle="modal" data-bs-target="#createPlaylistModal">
+                    ➕
+                </button>
+            </div>
+
+            <div
+                    id="playlistLinks"
+                    hx-get="/playlists"
+                    hx-trigger="load"
+                    hx-target="#playlistLinks"
+                    hx-swap="innerHTML"
+            >
+                <!-- Contenu playlists injecté ici -->
+            </div>
+
+            <hr class="bg-secondary my-3" />
+
+            <a
+                    class="nav-link text-white"
+                    hx-get="/historical"
+                    hx-target="#mainContent"
+                    hx-swap="innerHTML"
+                    href="/historical"
+            >
+                🕒 Récemment joué
+            </a>
+
+        </nav>
+    </div>
+
+    <!-- Contenu principal, vide au départ -->
+    <main id="mainContent" class="content h-100">
+        <!-- Contenu chargé dynamiquement ici -->
+    </main>
+</div>
+
+
+<!-- Modal pour créer une playlist -->
+<div class="modal fade" id="createPlaylistModal" tabindex="-1" aria-labelledby="createPlaylistModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPlaylistModalLabel">Créer une nouvelle playlist</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createPlaylistForm">
+                    <div class="mb-3">
+                        <label for="playlistName" class="form-label">Nom de la playlist</label>
+                        <input type="text" class="form-control" id="playlistName" name="name" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-primary" form="createPlaylistForm"
+                        hx-post="/playlists"
+                        hx-target="#playlistLinks"
+                        hx-swap="outerHTML">Créer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+</div>
+
+
+<!-- Menu contextuel simplifié -->
+<div id="trackContextMenu" class="context-menu d-none position-absolute"
+     hx-get="/context-menu"
+     hx-trigger="show-context-menu from:body"
+     hx-swap="innerHTML"
+     style="z-index: 1050; min-width: 200px;">
+</div>
+
+<div class="modal fade" id="confirmClearModal" tabindex="-1" aria-labelledby="confirmClearModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="confirmClearModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                    Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir vider tout votre historique de lecture ? Cette action est irréversible.
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+
+                <button
+                        id="confirm-clear-btn"
+                        class="btn btn-danger"
+                        hx-post="/historical/clear"
+                        hx-target=".historical-container"
+                        hx-swap="innerHTML"
+                        data-bs-dismiss="modal">
+                    Vider l'historique
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JS menu contextuel et player -->
+<script>
+
+    let currentTrack = null;
+
+    // Gestion du clic gauche → jouer la chanson
+    document.addEventListener("click", function (e) {
+
+        if (e.target.matches('button, a, .btn, .dropdown-toggle, .dropdown-item, [data-bs-toggle], .bi')) {
+            return;
+        }
+
+
+
+        const row = e.target.closest(".track-row");
+        if (row && e.button === 0 && !e.target.closest('.context-menu')) {
+
+            // On lit la chaîne JSON depuis l'attribut data-track et on la convertit en objet JS.
+            const track = JSON.parse(row.dataset.track);
+
+            // On construit l'URL du stream à partir du filepath
+            const streamUrl = `/stream/${track.filepath}`;
+
+            // On appelle la fonction playTrack avec toutes les infos
+            playTrack(streamUrl, track);
+
+            // Ajouter à l'historique via API
+            fetch('/api/historical/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filepath: track.filepath})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.stats && document.querySelector('.stats-container')) {
+                        // On est sur la page historique, mettre à jour les stats
+                        updateHistoricalStats(data.stats);
+                    }
+                })
+                .catch(err => console.log('Erreur historique:', err));
+        }
+    });
+
+    function updateHistoricalStats(stats) {
+        // Mettre à jour les statistiques sans recharger toute la page
+        const containers = document.querySelectorAll('.stats-container .fw-bold');
+        if (containers.length >= 3) {
+            containers[0].textContent = stats.total_plays;
+            containers[2].textContent = stats.unique_tracks;
+            // La dernière écoute sera "maintenant"
+            containers[1].textContent = new Date().toLocaleTimeString().substr(0,5);
+        }
+    }
+
+    // Gestion du clic droit → menu contextuel
+    document.addEventListener("contextmenu", function (e) {
+        const row = e.target.closest(".track-row");
+        if (row) {
+            e.preventDefault();
+
+            const filepath = row.dataset.filepath;
+
+            // Charger le menu via HTMX avec le filepath
+            htmx.ajax('GET', `/context-menu?filepath=${encodeURIComponent(filepath)}`, {
+                target: '#trackContextMenu',
+                swap: 'innerHTML'
+            }).then(() => {
+                // Positionner le menu après chargement
+                const menu = document.getElementById("trackContextMenu");
+                menu.style.top = `${e.pageY}px`;
+                menu.style.left = `${e.pageX}px`;
+                menu.classList.remove("d-none");
+
+                // Gérer le débordement d'écran
+                const rect = menu.getBoundingClientRect();
+                if (rect.right > window.innerWidth) {
+                    menu.style.left = `${e.pageX - rect.width}px`;
+                }
+                if (rect.bottom > window.innerHeight) {
+                    menu.style.top = `${e.pageY - rect.height}px`;
+                }
+            });
+        }
+    });
+
+
+    function playTrack(url, track) {
+        const player = document.getElementById("player");
+        const source = document.getElementById("playerSource");
+        const nowPlaying = document.getElementById("nowPlayingInfo");
+
+        // Met à jour l'audio
+        source.src = url;
+        player.load();
+        player.play();
+
+        // Sauvegarde la piste en cours
+        currentTrack = track;
+
+        // Affiche le panneau "Now Playing"
+        nowPlaying.classList.remove("d-none");
+
+        // Mets à jour les infos de base (titre, artiste, album)
+        const trackDetails = document.getElementById("trackDetails");
+        trackDetails.innerHTML = `
+        <div class="d-flex align-items-center mb-2">
+            ${track.album_art ? `<img src="${track.album_art}" width="50" class="me-2 rounded">` : ''}
+            <div>
+                <strong>${track.title}</strong><br>
+                <small>${track.artist}</small>
+            </div>
+        </div>
+    `;
+    }
+
+    document.querySelector('a[href="#lyrics-tab"]').addEventListener('shown.bs.tab', function (e) {
+        if (currentTrack) {
+            loadLyrics(currentTrack);
+        } else {
+            document.getElementById("lyricsContent").innerHTML =
+                '<p class="text-muted">Aucune chanson en cours.</p>';
+        }
+    });
+
+    function loadLyrics(track) {
+        const artist = encodeURIComponent(track.artist);
+        const title = encodeURIComponent(track.title);
+        const url = `/track/lyrics?artist=${artist}&title=${title}`;
+
+        // Indicateur de chargement
+        document.getElementById("lyricsContent").innerHTML = '<small>Chargement des paroles...</small>';
+
+        htmx.ajax('GET', url, {
+            target: '#lyricsContent',
+            swap: 'innerHTML'
+        }).then(() => {
+            console.log('Paroles chargées');
+        }).catch(err => {
+            console.error('Erreur HTMX:', err);
+        });
+    }
+
+    //appelé dans du code retourné par le backend
+    function showToast(message, type = 'success') {
+        const toastContainer = document.querySelector('.toast-container');
+
+        const toastId = 'toast-' + Date.now();
+        const iconClass = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+        const bgClass = type === 'success' ? 'text-bg-success' : 'text-bg-danger';
+
+        const toastHTML = `
+        <div id="${toastId}" class="toast ${bgClass}" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body d-flex align-items-center">
+                <i class="bi ${iconClass} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, {
+            delay: 2000 // 2 secondes
+        });
+
+        toast.show();
+
+        // Supprimer l'élément du DOM après qu'il soit caché
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.successful && evt.detail.requestConfig.path === "/playlists") {
+            var modal = bootstrap.Modal.getInstance(document.getElementById('createPlaylistModal'));
+            if(modal!=null)
+                modal.hide();
+        }
+    });
+
+    document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+        const dropdownToggles = evt.target.querySelectorAll('[data-bs-toggle="dropdown"]');
+        dropdownToggles.forEach(toggle => {
+            if (!bootstrap.Dropdown.getInstance(toggle)) {
+                new bootstrap.Dropdown(toggle);
+            }
+        });
+    });
+
+    function toggleNowPlaying() {
+        const nowPlaying = document.getElementById("nowPlayingInfo");
+        const icon = document.getElementById("toggleIcon");
+
+        if (nowPlaying.style.maxHeight === "100px" || nowPlaying.style.maxHeight === "") {
+            nowPlaying.style.maxHeight = "300px";
+            icon.classList.remove("bi-chevron-down");
+            icon.classList.add("bi-chevron-up");
+        } else {
+            nowPlaying.style.maxHeight = "100px";
+            icon.classList.remove("bi-chevron-up");
+            icon.classList.add("bi-chevron-down");
+        }
+    }
+
+
+</script>
+</body>
+</html>

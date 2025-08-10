@@ -1,0 +1,143 @@
+<div class="historical-container">
+<h2 class="text-white mb-4">
+  <i class="bi bi-clock-history me-2"></i>
+  Récemment joué
+</h2>
+
+  {% if tracks %}
+  <!-- Statistiques d'écoute, toujours visible -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-dark border-secondary stats-container" id="historical-stats">
+        <div class="card-body py-2">
+          <div class="row text-center">
+            <div class="col-4">
+              <small class="text-muted">Total écoutes</small>
+              <div class="text-white fw-bold" data-stat="total-plays">{{ stats.total_plays }}</div>
+            </div>
+            <div class="col-4">
+              <small class="text-muted">Dernière écoute</small>
+              <div class="text-white fw-bold" data-stat="last-played">
+                {% if tracks %}
+                {{ tracks[0].played_at }}
+                {% else %}
+                Jamais
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-4">
+              <small class="text-muted">Pistes uniques</small>
+              <div class="text-white fw-bold" data-stat="unique-tracks">{{ stats.unique_tracks }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- vider historique -->
+  <div class="mb-3">
+    <button class="btn btn-outline-light btn-sm me-2"
+            data-bs-toggle="modal"
+            data-bs-target="#confirmClearModal"
+            title="Vider l'historique">
+      <i class="bi bi-trash3 me-1"></i>Vider l'historique
+    </button>
+  </div>
+
+<!-- Liste des pistes -->
+<div style="max-height: 60vh; overflow-y: auto;">
+  <table class="table table-dark table-hover">
+    <thead class="sticky-top">
+    <tr>
+      <th style="width: 50px;"></th>
+      <th>Titre</th>
+      <th>Artiste</th>
+      <th>Album</th>
+      <th style="width: 80px;">Durée</th>
+      <th style="width: 120px;">Joué à</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for track in tracks %}
+    <tr class="track-row" data-track='{{ track | tojson }}'>
+      <td>
+
+        <i class="bi bi-play"></i>
+
+      </td>
+      <td class="text-white fw-semibold">{{ track.title or track.filename }}</td>
+      <td class="text-muted">{{ track.artist or '-' }}</td>
+      <td class="text-muted">{{ track.album or '-' }}</td>
+      <td class="text-muted">{{ track.duration_str }}</td>
+      <td class="text-secondary small">{{ track.played_at }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination si nécessaire -->
+{% if tracks|length >= 50 %}
+<div class="d-flex justify-content-center mt-4">
+  <button class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-down me-2"></i>Charger plus
+  </button>
+</div>
+{% endif %}
+
+{% else %}
+<!-- État vide -->
+<div class="text-center py-5">
+  <i class="bi bi-clock-history display-1 text-muted mb-3"></i>
+  <h4 class="text-muted">Aucun historique</h4>
+  <p class="text-secondary">Commencez à écouter de la musique pour voir votre historique ici.</p>
+  <a href="/library" class="btn btn-primary">
+    <i class="bi bi-music-note-list me-2"></i>Parcourir la bibliothèque
+  </a>
+</div>
+{% endif %}
+
+</div>
+
+<script>
+
+
+  function updateHistoricalStats(stats) {
+    const statsContainer = document.querySelector('.stats-container');
+    if (!statsContainer) return;
+
+    const totalElement = statsContainer.querySelector('[data-stat="total-plays"]');
+    const uniqueElement = statsContainer.querySelector('[data-stat="unique-tracks"]');
+    const lastPlayedElement = statsContainer.querySelector('[data-stat="last-played"]');
+
+    if (totalElement) totalElement.textContent = stats.total_plays;
+    if (uniqueElement) uniqueElement.textContent = stats.unique_tracks;
+    if (lastPlayedElement) {
+      lastPlayedElement.textContent = stats.total_plays > 0
+              ? new Date().toLocaleTimeString().substr(0, 5)
+              : "Jamais";
+    }
+  }
+
+  window.updateHistoricalStats = updateHistoricalStats;
+
+
+  // Écoute les swaps HTMX
+  document.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.target.classList.contains('historical-container')) {
+      const totalPlaysEl = evt.detail.xhr?.responseXML?.querySelector?.('[data-stat="total-plays"]');
+      const uniqueTracksEl = evt.detail.xhr?.responseXML?.querySelector?.('[data-stat="unique-tracks"]');
+      const lastPlayedEl = evt.detail.xhr?.responseXML?.querySelector?.('[data-stat="last-played"]');
+
+      if (totalPlaysEl && uniqueTracksEl && lastPlayedEl) {
+        const stats = {
+          total_plays: parseInt(totalPlaysEl.textContent) || 0,
+          unique_tracks: parseInt(uniqueTracksEl.textContent) || 0
+        };
+        window.updateHistoricalStats(stats);
+      }
+    }
+  });
+
+</script>

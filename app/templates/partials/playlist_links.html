@@ -1,0 +1,17 @@
+{% for name in playlists %}
+<div class="d-flex justify-content-between align-items-center">
+    <a class="nav-link flex-grow-1"
+   hx-get="/playlists/{{ name }}"
+   hx-target="#mainContent"
+   hx-swap="innerHTML">{{ name }}</a>
+    <button class="p-0 text-danger border-0 bg-transparent"
+            style="line-height: 1;"
+            hx-delete="/playlists/{{ name }}"
+            hx-trigger="click"
+            hx-target="#playlistLinks"
+            hx-swap="innerHTML"
+            title="Supprimer">
+        &times;
+    </button>
+</div>
+{% endfor %}
