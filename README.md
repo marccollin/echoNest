@@ -22,5 +22,17 @@ La configuration de l'application est centralisé dans config.py
 * Gestion de playlist
 * Historique de la musique écouté
 
+### Lancement
+
+Lancer l'application et aller dans votre navigateur préféré: http://127.0.0.1:8000/
+
+#### Écran de la bibliothèque
+
+![echoNest library screen](https://raw.githubusercontent.com/marccollin/echonest/master/echoNest_library.jpg)
+
+#### Écran récemment joué
+
+![echoNest library screen](https://raw.githubusercontent.com/marccollin/echonest/master/echoNest_history.jpg)
+
 ### Amélioration possible
 Utilisation d'une base de donnée ou fichier pour stocker les fichiers scannées et d'éviter de scanner à chaque fois la structure sur le disque.
